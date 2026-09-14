@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자투리 시간 효율 배치 플래너</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        button.btn-add {
+            background-color: #f1f5f9;
+            color: var(--text);
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px dashed #cbd5e1;
+        }
+
+        button.btn-add:hover {
+            background-color: #e2e8f0;
+        }
+
+        button.btn-primary {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        button.btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .item-tag {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .item-tag .delete-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            width: auto;
+            padding: 0 4px;
+            font-weight: bold;
+        }
+
+        /* 결과 화면 디자인 */
+        .result-card {
+            display: none;
+            background: #ffffff;
+            border: 2px solid var(--primary);
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border-left: 4px solid var(--primary);
+        }
+
+        .time-badge {
+            font-weight: 700;
+            color: var(--primary);
+            min-width: 80px;
+            font-size: 14px;
+        }
+
+        .activity-details {
+            flex-grow: 1;
+        }
+
+        .activity-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .activity-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .tag-energy {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        .energy-high { background: #fee2e2; color: #991b1b; }
+        .energy-medium { background: #fef3c7; color: #92400e; }
+        .energy-low { background: #dcfce7; color: #166534; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>⚡ 자투리 시간 모방 배치 플래너</h1>
+        <p>오늘의 자투리 시간을 입력하고 내 공부/휴식 효율을 극대화해보세요!</p>
+    </header>
+
+    <!-- 1. 자투리 시간 입력 -->
+    <div class="card">
+        <h2>⏱️ 1. 발생할 자투리 시간 입력</h2>
+        <div class="form-grid">
+            <input type="text" id="slot-name" placeholder="예: 등교 버스 안, 점심시간 후">
+            <input type="number" id="slot-time" placeholder="시간(분 단위, 예: 20)">
+            <select id="slot-energy">
+                <option value="high">집중도 상 (쉬운 암기, 풀이 가능)</option>
+                <option value="medium" selected>집중도 중 (일반 학습 가능)</option>
+                <option value="low">집중도 하 (피곤함, 단순 복습/휴식)</option>
+            </select>
+        </div>
+        <button class="btn-add" onclick="addTimeSlot()">+ 자투리 시간 추가하기</button>
+        <div class="item-list" id="slot-list"></div>
+    </div>
+
+    <!-- 2. 하고 싶은 공부/활동 입력 -->
+    <div class="card">
+        <h2>📚 2. 오늘 해야 할 공부/활동 리스트</h2>
+        <div class="form-grid">
+            <input type="text" id="task-name" placeholder="예: 영단어 30개 외우기, 수학 오답 정리">
+            <input type="number" id="task-time" placeholder="필요 시간(분 단위, 예: 15)">
+            <select id="task-energy">
+                <option value="high">높은 집중 필요 (수학/비문학 등)</option>
+                <option value="medium" selected>보통 집중 필요 (단어/암기 등)</option>
+                <option value="low">낮은 집중 필요 (듣기/정리/휴식)</option>
+            </select>
+        </div>
+        <button class="btn-add" onclick="addTask()">+ 공부/활동 추가하기</button>
+        <div class="item-list" id="task-list"></div>
+    </div>
+
+    <!-- 실행 버튼 -->
+    <button class="btn-primary" onclick="generateSchedule()">최적의 자투리 시간표 생성하기 ✨</button>
+
+    <!-- 3. 결과 영역 -->
+    <div class="card result-card" id="result-card">
+        <h2>🎯 맞춤형 자투리 시간 배치 결과</h2>
+        <div class="timeline" id="timeline"></div>
+    </div>
+</div>
+
+<script>
+    let timeSlots = [];
+    let tasks = [];
+
+    // 자투리 시간 추가
+    function addTimeSlot() {
+        const name = document.getElementById('slot-name').value.trim();
+        const time = parseInt(document.getElementById('slot-time').value);
+        const energy = document.getElementById('slot-energy').value;
+
+        if (!name || isNaN(time) || time <= 0) {
+            alert('올바른 장소/시간 이름과 분 단위 시간을 입력해주세요.');
+            return;
+        }
+
+        timeSlots.push({ id: Date.now(), name, time, energy });
+        document.getElementById('slot-name').value = '';
+        document.getElementById('slot-time').value = '';
+        renderSlots();
+    }
+
+    // Task 추가
+    function addTask() {
+        const name = document.getElementById('task-name').value.trim();
+        const time = parseInt(document.getElementById('task-time').value);
+        const energy = document.getElementById('task-energy').value;
+
+        if (!name || isNaN(time) || time <= 0) {
+            alert('올바른 활동 이름과 소요 시간을 입력해주세요.');
+            return;
+        }
+
+        tasks.push({ id: Date.now(), name, time, energy });
+        document.getElementById('task-name').value = '';
+        document.getElementById('task-time').value = '';
+        renderTasks();
+    }
+
+    function removeSlot(id) {
+        timeSlots = timeSlots.filter(s => s.id !== id);
+        renderSlots();
+    }
+
+    function removeTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        renderTasks();
+    }
+
+    function renderSlots() {
+        const container = document.getElementById('slot-list');
+        container.innerHTML = timeSlots.map(s => `
+            <div class="item-tag">
+                <span>📍 <strong>${s.name}</strong> (${s.time}분) - 집중도: ${getEnergyLabel(s.energy)}</span>
+                <button class="delete-btn" onclick="removeSlot(${s.id})">✕</button>
+            </div>
+        `).join('');
+    }
+
+    function renderTasks() {
+        const container = document.getElementById('task-list');
+        container.innerHTML = tasks.map(t => `
+            <div class="item-tag">
+                <span>📖 <strong>${t.name}</strong> (${t.time}분 필요) - 필요 집중도: ${getEnergyLabel(t.energy)}</span>
+                <button class="delete-btn" onclick="removeTask(${t.id})">✕</button>
+            </div>
+        `).join('');
+    }
+
+    function getEnergyLabel(energy) {
+        if (energy === 'high') return '상(高)';
+        if (energy === 'medium') return '중(中)';
+        return '하(低)';
+    }
+
+    // 자투리 시간 매칭 알고리즘
+    function generateSchedule() {
+        if (timeSlots.length === 0 || tasks.length === 0) {
+            alert('자투리 시간과 할 일 리스트를 최소 1개 이상 등록해주세요!');
+            return;
+        }
+
+        const timelineEl = document.getElementById('timeline');
+        timelineEl.innerHTML = '';
+
+        // 카피본 생성하여 매칭 수행
+        let availableTasks = [...tasks];
+        
+        // 집중도 매핑 (알고리즘 우선순위용)
+        const energyScore = { 'high': 3, 'medium': 2, 'low': 1 };
+
+        timeSlots.forEach(slot => {
+            let assignedTasks = [];
+            let remainingTime = slot.time;
+
+            // 조건에 맞는 Task 탐색 (시간 내 가능 + 집중도가 맞는 항목)
+            for (let i = 0; i < availableTasks.length; i++) {
+                let task = availableTasks[i];
+
+                // 자투리 시간 안에 들어가는 공부 과제인 경우
+                if (task.time <= remainingTime) {
+                    assignedTasks.push(task);
+                    remainingTime -= task.time;
+                    availableTasks.splice(i, 1); // 사용한 과제 제거
+                    i--; // 인덱스 보정
+                }
+            }
+
+            // UI 생성
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+
+            let taskHTML = '';
+            if (assignedTasks.length > 0) {
+                taskHTML = assignedTasks.map(t => `
+                    <div style="margin-bottom: 8px;">
+                        <div class="activity-title">✅ ${t.name} (${t.time}분)</div>
+                        <span class="tag-energy energy-${t.energy}">필요 집중도: ${getEnergyLabel(t.energy)}</span>
+                    </div>
+                `).join('');
+                
+                if (remainingTime > 0) {
+                    taskHTML += `<div class="activity-desc">💡 남는 시간 ${remainingTime}분: 가벼운 스트레칭이나 명상을 추천합니다.</div>`;
+                }
+            } else {
+                taskHTML = `
+                    <div class="activity-title" style="color: #94a3b8;">☕ 알맞은 길이의 학습이 없음</div>
+                    <div class="activity-desc">${slot.time}분 동안은 뇌를 쉬게 하거나 가벼운 음악을 들으며 휴식하세요!</div>
+                `;
+            }
+
+            item.innerHTML = `
+                <div class="time-badge">📍 ${slot.name}<br>(${slot.time}분)</div>
+                <div class="activity-details">
+                    ${taskHTML}
+                </div>
+            `;
+            timelineEl.appendChild(item);
+        });
+
+        // 남아버린 Task 안내
+        if (availableTasks.length > 0) {
+            const unassignedDiv = document.createElement('div');
+            unassignedDiv.style.marginTop = '16px';
+            unassignedDiv.style.padding = '12px';
+            unassignedDiv.style.background = '#fff1f2';
+            unassignedDiv.style.borderRadius = '8px';
+            unassignedDiv.style.color = '#be123c';
+            unassignedDiv.style.fontSize = '13px';
+            
+            const names = availableTasks.map(t => `${t.name}(${t.time}분)`).join(', ');
+            unassignedDiv.innerHTML = `⚠️ <strong>시간 부족으로 배치되지 못한 과제:</strong> ${names}<br>자투리 시간을 더 확보하거나 목표 시간을 줄여보세요.`;
+            timelineEl.appendChild(unassignedDiv);
+        }
+
+        document.getElementById('result-card').style.display = 'block';
+        document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
