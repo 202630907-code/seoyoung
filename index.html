@@ -3,166 +3,869 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>오늘 먹을 저녁 메뉴 추천</title>
+    <title>타임 스파크 | 자투리 시간 AI 스마트 배분기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Plus Jakarta Sans & Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        :root {
+            --font-sans: 'Plus Jakarta Sans', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         body {
-            background-color: #f7f9fc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: var(--font-sans);
+            background: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
             min-height: 100vh;
-            padding: 20px;
+            color: #f8fafc;
         }
 
-        .container {
-            background: #ffffff;
-            width: 100%;
-            max-width: 480px;
-            padding: 40px 30px;
-            border-radius: 24px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            text-align: center;
+        /* Glassmorphism Surface Tokens */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
         }
 
-        h1 {
-            color: #2c3e50;
-            font-size: 26px;
-            margin-bottom: 8px;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .subtitle {
-            color: #7f8c8d;
-            font-size: 15px;
-            margin-bottom: 35px;
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
-        .display-card {
-            background: #fff8f0;
-            border: 2px dashed #ffe0b2;
-            border-radius: 20px;
-            padding: 40px 20px;
-            margin-bottom: 30px;
-            min-height: 220px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .emoji {
-            font-size: 80px;
-            line-height: 1;
-            margin-bottom: 15px;
-            transition: transform 0.2s ease;
-        }
-
-        .menu-name {
-            font-size: 24px;
-            font-weight: 700;
-            color: #e67e22;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #ff7e5f, #feb47b);
-            color: #ffffff;
-            border: none;
-            width: 100%;
-            padding: 18px;
-            font-size: 18px;
-            font-weight: 700;
-            border-radius: 16px;
-            cursor: pointer;
-            box-shadow: 0 8px 15px rgba(255, 126, 95, 0.3);
-            transition: all 0.2s ease;
-        }
-
-        .btn:hover {
+        .glass-card-hover:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(129, 140, 248, 0.3);
             transform: translateY(-2px);
-            box-shadow: 0 12px 20px rgba(255, 126, 95, 0.4);
+            box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.2);
         }
 
-        .btn:active {
-            transform: translateY(1px);
-            box-shadow: 0 5px 10px rgba(255, 126, 95, 0.3);
+        /* Glow & Gradients */
+        .glow-indigo {
+            box-shadow: 0 0 35px -5px rgba(99, 102, 241, 0.3);
         }
 
-        /* 애니메이션 효과 */
-        .bounce {
-            animation: bounce 0.4s ease;
+        .glow-purple {
+            box-shadow: 0 0 35px -5px rgba(168, 85, 247, 0.3);
         }
 
-        @keyframes bounce {
-            0% { transform: scale(0.5); opacity: 0; }
-            70% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
+        .gradient-border {
+            position: relative;
+            border-radius: 1.5rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+            padding: 1px;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 50%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Animated Pulse & Radar Rings */
+        @keyframes radarSweep {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .radar-pulse {
+            animation: radarSweep 3s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.6);
+        }
+
+        /* Dynamic Progress Bar Smooth Transition */
+        .smooth-progress {
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
     </style>
 </head>
-<body>
+<body class="flex flex-col justify-between p-4 md:p-8 min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
 
-    <div class="container">
-        <h1>🍽️ 오늘 뭐 먹지?</h1>
-        <p class="subtitle">결정 장애를 위한 저녁 메뉴 추천 시스템</p>
-
-        <div class="display-card" id="card">
-            <div class="emoji" id="emoji">❓</div>
-            <div class="menu-name" id="menu">버튼을 눌러보세요!</div>
+    <!-- Navigation Header -->
+    <header class="max-w-4xl w-full mx-auto flex items-center justify-between py-2 mb-6">
+        <div class="flex items-center space-x-3.5">
+            <div class="relative">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+                    <i class="fa-solid fa-bolt text-lg"></i>
+                </div>
+                <span class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-indigo-500 border-2 border-slate-900"></span>
+                </span>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xl font-extrabold tracking-tight gradient-text">TIME SPARK</h1>
+                    <span class="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">PRO AI</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">자투리 시간 스마트 초간편 분배 솔루션</p>
+            </div>
         </div>
 
-        <button class="btn" onclick="recommendMenu()">저녁 메뉴 추천</button>
+        <!-- API Key Status Badge / Trigger -->
+        <button id="apiKeyBtn" onclick="toggleApiKeyModal()" class="text-xs px-3.5 py-2 rounded-xl border border-white/10 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 shadow-sm transition-all flex items-center gap-2 group backdrop-blur-md">
+            <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400"></span>
+            <span id="apiStatusText" class="font-medium group-hover:text-white">AI 엔진 가동중</span>
+            <i class="fa-solid fa-key text-slate-400 text-[11px] group-hover:text-indigo-300 transition-colors"></i>
+        </button>
+    </header>
+
+    <!-- Main Content Shell -->
+    <main class="max-w-3xl w-full mx-auto my-auto py-2">
+
+        <!-- Stepper Indicator -->
+        <div class="mb-8 px-2 max-w-xl mx-auto">
+            <div class="relative flex items-center justify-between">
+                <!-- Track Line -->
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-slate-800 -z-10"></div>
+                <!-- Active Fill Line -->
+                <div id="progressLine" class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 -z-10 smooth-progress w-0"></div>
+
+                <!-- Step 1 Dot -->
+                <div id="stepDot1" class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-300 border border-indigo-400/30">
+                    1
+                </div>
+                <!-- Step 2 Dot -->
+                <div id="stepDot2" class="w-10 h-10 rounded-2xl bg-slate-800 text-slate-500 border border-slate-700/60 flex items-center justify-center font-bold text-sm transition-all duration-300">
+                    2
+                </div>
+                <!-- Step 3 Dot -->
+                <div id="stepDot3" class="w-10 h-10 rounded-2xl bg-slate-800 text-slate-500 border border-slate-700/60 flex items-center justify-center font-bold text-sm transition-all duration-300">
+                    3
+                </div>
+            </div>
+            <div class="flex justify-between text-[11px] font-semibold text-slate-400 mt-2.5 px-1">
+                <span class="text-indigo-400">자투리 시간</span>
+                <span>할 일 목록</span>
+                <span>스마트 배분</span>
+            </div>
+        </div>
+
+        <!-- ================= STEP 1: TIME INPUT ================= -->
+        <div id="step1" class="glass-panel rounded-3xl p-6 sm:p-10 transition-all duration-300">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-4 radar-pulse">
+                    <i class="fa-regular fa-hourglass-half text-2xl"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">오늘 자투리 시간이 몇 분 남았나요?</h2>
+                <p class="text-xs sm:text-sm text-slate-400 max-w-sm mx-auto">버스와 지하철 기다릴 때, 점심 후 짜투리 시간 등 사용하고자 하는 시간을 알려주세요.</p>
+            </div>
+
+            <!-- Quick Selection Preset Badges -->
+            <div class="grid grid-cols-4 gap-2.5 mb-8 max-w-md mx-auto">
+                <button type="button" onclick="setQuickTime(15)" class="py-2.5 px-3 rounded-2xl border border-white/10 bg-slate-800/50 hover:border-indigo-500/50 hover:bg-indigo-500/10 text-slate-300 hover:text-white text-xs font-semibold transition text-center backdrop-blur-md">⚡ 15분</button>
+                <button type="button" onclick="setQuickTime(30)" class="py-2.5 px-3 rounded-2xl border border-white/10 bg-slate-800/50 hover:border-indigo-500/50 hover:bg-indigo-500/10 text-slate-300 hover:text-white text-xs font-semibold transition text-center backdrop-blur-md">☕ 30분</button>
+                <button type="button" onclick="setQuickTime(45)" class="py-2.5 px-3 rounded-2xl border border-white/10 bg-slate-800/50 hover:border-indigo-500/50 hover:bg-indigo-500/10 text-slate-300 hover:text-white text-xs font-semibold transition text-center backdrop-blur-md">🎯 45분</button>
+                <button type="button" onclick="setQuickTime(60)" class="py-2.5 px-3 rounded-2xl border border-white/10 bg-slate-800/50 hover:border-indigo-500/50 hover:bg-indigo-500/10 text-slate-300 hover:text-white text-xs font-semibold transition text-center backdrop-blur-md">🚀 60분</button>
+            </div>
+
+            <div class="max-w-md mx-auto space-y-5">
+                <div class="relative">
+                    <input type="number" id="timeInput" min="5" max="360" placeholder="30" 
+                        class="w-full text-center text-5xl font-black py-5 px-6 pr-14 rounded-2xl bg-slate-900/80 border border-slate-700/80 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition text-white tracking-tight shadow-inner">
+                    <span class="absolute right-6 top-1/2 -translate-y-1/2 text-xl font-bold text-slate-500">분</span>
+                </div>
+
+                <div class="text-center text-xs text-rose-400 font-medium hidden" id="timeError">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> 최소 5분 이상의 시간을 입력해주세요!
+                </div>
+
+                <button onclick="goToStep(2)" class="w-full py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:opacity-95 text-white font-bold text-sm rounded-2xl shadow-lg shadow-indigo-500/25 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 group">
+                    <span>다음: 할 일 입력하기</span>
+                    <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= STEP 2: TODO INPUT ================= -->
+        <div id="step2" class="glass-panel rounded-3xl p-6 sm:p-10 transition-all duration-300 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-white/10">
+                <div>
+                    <h2 class="text-xl font-bold text-white tracking-tight">오늘 해야 할 일을 적어주세요</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">처음엔 2개가 제공됩니다. 필요시 5개까지 확장하세요.</p>
+                </div>
+                <div class="bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 self-start sm:self-auto">
+                    <i class="fa-regular fa-clock text-indigo-400"></i>
+                    <span>배분 목표: <strong id="selectedTimeDisplay" class="text-white text-sm">30</strong>분</span>
+                </div>
+            </div>
+
+            <!-- Task Input Rows -->
+            <div class="space-y-3.5 mb-5" id="todoContainer">
+                <!-- Populated dynamically: exact 2 initial rows -->
+            </div>
+
+            <!-- Dynamic Add Task Button -->
+            <button id="addTaskBtn" onclick="addNewTaskInput()" class="w-full py-3.5 border border-dashed border-indigo-500/30 hover:border-indigo-400/60 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-300 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 mb-6 group">
+                <i class="fa-solid fa-plus text-xs group-hover:rotate-90 transition-transform"></i>
+                <span>+ 할 일 추가하기 (<span id="currentTaskCountText">2</span>/5)</span>
+            </button>
+
+            <div class="flex gap-3">
+                <button onclick="goToStep(1)" class="w-1/3 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl transition flex items-center justify-center gap-2 text-xs border border-white/5">
+                    <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                    <span>이전</span>
+                </button>
+                <button onclick="processAIAllocation()" class="w-2/3 py-3.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:opacity-95 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-xs">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>스마트 AI 분배 시작</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= STEP 3: REFINED RESULT & SPARK TIMELINE ================= -->
+        <div id="step3" class="glass-panel rounded-3xl p-6 sm:p-10 transition-all duration-300 hidden">
+            
+            <!-- Result Top Bar & Metric Overview -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/10">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="allocationBadge" class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider">
+                            ✨ AI 스마트 분배 완료
+                        </span>
+                        <span class="text-xs text-slate-400 font-mono" id="timeMatchStatus">100% 매칭</span>
+                    </div>
+                    <h2 class="text-2xl font-black text-white tracking-tight">TIME SPARK TIMELINE</h2>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="processAIAllocation()" class="px-3.5 py-2 text-xs bg-slate-800/90 hover:bg-slate-700/90 text-slate-300 hover:text-white rounded-xl transition flex items-center gap-1.5 border border-white/10">
+                        <i class="fa-solid fa-rotate-right text-[10px]"></i> 재배분
+                    </button>
+                    <button onclick="goToStep(2)" class="px-3.5 py-2 text-xs bg-slate-800/90 hover:bg-slate-700/90 text-slate-300 hover:text-white rounded-xl transition flex items-center gap-1.5 border border-white/10">
+                        <i class="fa-solid fa-pen-to-square text-[10px]"></i> 수정
+                    </button>
+                </div>
+            </div>
+
+            <!-- Executive Summary Metric Cards Grid -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="glass-card rounded-2xl p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">입력 자투리 시간</span>
+                    <span class="text-lg sm:text-2xl font-extrabold text-white" id="summaryTotalInput">0</span><span class="text-xs text-indigo-400 font-bold ml-0.5">분</span>
+                </div>
+                <div class="glass-card rounded-2xl p-3.5 text-center bg-indigo-500/5 border-indigo-500/20">
+                    <span class="text-[10px] font-bold text-indigo-300 uppercase tracking-wider block mb-1">생산성 자투리 작업</span>
+                    <span class="text-lg sm:text-2xl font-extrabold text-indigo-300" id="summaryProductiveMins">0</span><span class="text-xs text-indigo-300 font-bold ml-0.5">분</span>
+                </div>
+                <div class="glass-card rounded-2xl p-3.5 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">버퍼 및 쉬어가기</span>
+                    <span class="text-lg sm:text-2xl font-extrabold text-purple-300" id="summaryBufferMins">0</span><span class="text-xs text-purple-300 font-bold ml-0.5">분</span>
+                </div>
+            </div>
+
+            <!-- Active Focus Deck Player -->
+            <div class="mb-8 rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 border border-indigo-500/30 p-5 sm:p-7 shadow-2xl relative overflow-hidden group">
+                <!-- Ambient Glow Behind Player -->
+                <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] uppercase tracking-wider text-indigo-400 font-bold flex items-center gap-1.5" id="timerStatusLabel">
+                            <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> 스케줄 플레이어
+                        </span>
+                        <span id="currentTaskIndexBadge" class="text-xs font-mono bg-indigo-500/20 border border-indigo-500/30 px-2.5 py-0.5 rounded-full text-indigo-300 font-semibold">
+                            TASK 1 / 2
+                        </span>
+                    </div>
+
+                    <!-- Active Task Title -->
+                    <h3 id="currentTaskTitle" class="text-lg sm:text-xl font-bold text-white mb-4 truncate">
+                        '시작' 버튼을 눌러 첫 할 일을 시작하세요!
+                    </h3>
+
+                    <!-- Player Core Display -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/80 p-4 rounded-xl border border-white/5 mb-5">
+                        <div class="flex items-baseline gap-3">
+                            <span id="timerDisplay" class="text-4xl sm:text-5xl font-black tracking-tight font-mono text-white">00:00</span>
+                            <span class="text-xs text-slate-400 font-medium">카운트다운</span>
+                        </div>
+                        
+                        <!-- Control Buttons -->
+                        <div class="flex items-center gap-2">
+                            <button id="startTimerBtn" onclick="toggleTimer()" class="flex-1 sm:flex-none px-6 py-3 bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-play text-xs" id="timerBtnIcon"></i>
+                                <span id="timerBtnText">스케줄 시작</span>
+                            </button>
+                            <button onclick="skipNextTask()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition border border-white/10 flex items-center justify-center gap-1.5">
+                                <span>다음</span>
+                                <i class="fa-solid fa-forward-step text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar for active step -->
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div id="activeTaskProgressBar" class="bg-gradient-to-r from-indigo-400 to-purple-400 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Flow Timeline Display -->
+            <div class="mb-6">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-indigo-400"></i> AI 추천 할 일 타임라인
+                </h3>
+
+                <!-- Vertical Connected Timeline Container -->
+                <div class="space-y-3 relative before:absolute before:left-6 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-800" id="timelineContainer">
+                    <!-- Dynamic tasks will be rendered here -->
+                </div>
+            </div>
+
+            <!-- AI Insight Banner -->
+            <div class="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-slate-300 text-xs leading-relaxed flex items-start gap-3.5">
+                <div class="p-2 rounded-xl bg-purple-500/10 text-purple-400 flex-shrink-0 mt-0.5">
+                    <i class="fa-solid fa-sparkles text-sm"></i>
+                </div>
+                <div>
+                    <strong class="font-bold text-white block mb-0.5">AI 생산성 코칭:</strong>
+                    <span id="aiTipText" class="text-slate-400">자투리 시간 중 15분 단위 몰입은 뇌의 피로도를 최소화하고 효율을 최대로 올립니다.</span>
+                </div>
+            </div>
+
+            <button onclick="resetAll()" class="w-full mt-6 py-3.5 border border-white/10 text-slate-400 hover:text-white hover:bg-slate-800/50 font-bold rounded-2xl text-xs transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate"></i>
+                <span>새 자투리 시간 설정하기</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-500">
+        © 2026 TIME SPARK • 자투리 시간 효율 극대화 AI
+    </footer>
+
+    <!-- Modal for API Key Input -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel rounded-3xl p-6 max-w-md w-full border border-white/10 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-key text-indigo-400"></i> Gemini API 키 연동
+                </h3>
+                <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Gemini API Key를 등록하면 실시간 맞춤형 분석으로 더욱 정확하게 자투리 시간을 분배합니다. 키가 없어도 스마트 로컬 알고리즘이 자동으로 실행됩니다.
+            </p>
+            <input type="password" id="userApiKeyInput" placeholder="AIzaSy..." class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-indigo-500 outline-none">
+            <div class="flex gap-2 justify-end">
+                <button onclick="saveApiKey()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition">
+                    저장하기
+                </button>
+            </div>
+        </div>
     </div>
 
+    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
-        // 메뉴 목록 (이모지 & 음식명)
-        const menuList = [
-            { name: "삼겹살", emoji: "🥓" },
-            { name: "치킨", emoji: "🍗" },
-            { name: "피자", emoji: "🍕" },
-            { name: "초밥", emoji: "🍣" },
-            { name: "떡볶이", emoji: "🥘" },
-            { name: "짜장면", emoji: "🍜" },
-            { name: "햄버거", emoji: "🍔" },
-            { name: "돈까스", emoji: "🍱" },
-            { name: "김치찌개", emoji: "🍲" },
-            { name: "족발/보쌈", emoji: "🍖" },
-            { name: "파스타", emoji: "🍝" },
-            { name: "카레", emoji: "🍛" },
-            { name: "스테이크", emoji: "🥩" },
-            { name: "타코", emoji: "🌮" },
-            { name: "쌀국수", emoji: "🍜" },
-            { name: "곱창/막창", emoji: "🥘" }
+        // State Management
+        let state = {
+            currentStep: 1,
+            totalMinutes: 30,
+            tasks: [],
+            allocatedSchedule: [],
+            apiKey: '',
+            timer: {
+                interval: null,
+                activeTaskIndex: 0,
+                secondsRemaining: 0,
+                totalTaskSeconds: 0,
+                isRunning: false
+            }
+        };
+
+        // Icon options for Todo items
+        const iconOptions = [
+            { icon: 'fa-book-open', label: '공부/독서' },
+            { icon: 'fa-laptop-code', label: '작업/코딩' },
+            { icon: 'fa-dumbbell', label: '운동/스트레칭' },
+            { icon: 'fa-envelope', label: '메일/연락' },
+            { icon: 'fa-broom', label: '정리/청소' },
+            { icon: 'fa-mug-hot', label: '휴식/명상' }
         ];
 
-        function recommendMenu() {
-            const emojiEl = document.getElementById("emoji");
-            const menuEl = document.getElementById("menu");
+        // Initialization
+        window.onload = function() {
+            initDefaultTasks();
+            updateStepUI();
+        };
 
-            // 애니메이션 초기화
-            emojiEl.classList.remove("bounce");
-            menuEl.classList.remove("bounce");
+        // Initialize with EXACTLY 2 tasks
+        function initDefaultTasks() {
+            state.tasks = [
+                { id: 1, name: '중요 메일 및 답장 작성', desc: '급한 메일 수신함 정리 및 1건 답장', icon: 'fa-envelope' },
+                { id: 2, name: '핵심 메모 복습하기', desc: '오늘 메모해둔 주요 아이디어 훑어보기', icon: 'fa-book-open' }
+            ];
+            renderTaskInputs();
+        }
 
-            // 랜덤 인덱스 추출
-            const randomIndex = Math.floor(Math.random() * menuList.length);
-            const selected = menuList[randomIndex];
+        // Preset Time Selection
+        function setQuickTime(mins) {
+            document.getElementById('timeInput').value = mins;
+            document.getElementById('timeError').classList.add('hidden');
+        }
 
-            // 잠깐의 딜레이 후 결과 보여주기 (애니메이션 재적용)
-            setTimeout(() => {
-                emojiEl.textContent = selected.emoji;
-                menuEl.textContent = selected.name;
+        // Navigation Control
+        function goToStep(stepNumber) {
+            if (stepNumber === 2) {
+                const val = parseInt(document.getElementById('timeInput').value);
+                if (!val || val < 5 || val > 360) {
+                    document.getElementById('timeError').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('timeError').classList.add('hidden');
+                state.totalMinutes = val;
+                document.getElementById('selectedTimeDisplay').innerText = val;
+            }
 
-                emojiEl.classList.add("bounce");
-                menuEl.classList.add("bounce");
-            }, 50);
+            state.currentStep = stepNumber;
+            updateStepUI();
+        }
+
+        function updateStepUI() {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+
+            document.getElementById(`step${state.currentStep}`).classList.remove('hidden');
+
+            const line = document.getElementById('progressLine');
+            const d1 = document.getElementById('stepDot1');
+            const d2 = document.getElementById('stepDot2');
+            const d3 = document.getElementById('stepDot3');
+
+            if (state.currentStep === 1) {
+                line.style.width = '0%';
+                setDotState(d1, true); setDotState(d2, false); setDotState(d3, false);
+            } else if (state.currentStep === 2) {
+                line.style.width = '50%';
+                setDotState(d1, true); setDotState(d2, true); setDotState(d3, false);
+            } else if (state.currentStep === 3) {
+                line.style.width = '100%';
+                setDotState(d1, true); setDotState(d2, true); setDotState(d3, true);
+            }
+        }
+
+        function setDotState(el, active) {
+            if (active) {
+                el.className = "w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-300 border border-indigo-400/30";
+            } else {
+                el.className = "w-10 h-10 rounded-2xl bg-slate-800 text-slate-500 border border-slate-700/60 flex items-center justify-center font-bold text-sm transition-all duration-300";
+            }
+        }
+
+        // Render Task Input Fields
+        function renderTaskInputs() {
+            const container = document.getElementById('todoContainer');
+            container.innerHTML = '';
+
+            state.tasks.forEach((task, idx) => {
+                const row = document.createElement('div');
+                row.className = "p-3.5 bg-slate-900/60 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center gap-3 transition-all";
+                
+                let iconOptionsHtml = iconOptions.map(o => 
+                    `<option value="${o.icon}" ${o.icon === task.icon ? 'selected' : ''}>${o.label}</option>`
+                ).join('');
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-300 font-bold text-xs flex items-center justify-center flex-shrink-0 border border-indigo-500/30">${idx + 1}</span>
+                        <select onchange="updateTaskIcon(${task.id}, this.value)" class="bg-slate-800 text-xs py-1.5 px-2.5 rounded-xl border border-slate-700 outline-none font-medium text-slate-300 focus:border-indigo-500">
+                            ${iconOptionsHtml}
+                        </select>
+                    </div>
+                    <div class="flex-1 w-full space-y-1">
+                        <input type="text" value="${escapeHtml(task.name)}" onchange="updateTaskName(${task.id}, this.value)" placeholder="할 일 이름 (예: 독서하기, 영단어 스터디)" class="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-white">
+                        <input type="text" value="${escapeHtml(task.desc || '')}" onchange="updateTaskDesc(${task.id}, this.value)" placeholder="세부 메모 (선택사항)" class="w-full text-[11px] text-slate-400 px-3 py-1.5 rounded-lg bg-slate-950/50 border border-slate-800/80 focus:border-indigo-500/50 outline-none">
+                    </div>
+                    ${state.tasks.length > 1 ? `
+                        <button onclick="removeTaskInput(${task.id})" title="삭제" class="text-slate-500 hover:text-rose-400 p-2 transition self-end sm:self-center">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    ` : ''}
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('currentTaskCountText').innerText = state.tasks.length;
+            const addBtn = document.getElementById('addTaskBtn');
+            if (state.tasks.length >= 5) {
+                addBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                addBtn.onclick = null;
+            } else {
+                addBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                addBtn.onclick = addNewTaskInput;
+            }
+        }
+
+        function addNewTaskInput() {
+            if (state.tasks.length >= 5) return;
+            const newId = Date.now();
+            state.tasks.push({
+                id: newId,
+                name: '',
+                desc: '',
+                icon: iconOptions[state.tasks.length % iconOptions.length].icon
+            });
+            renderTaskInputs();
+        }
+
+        function removeTaskInput(id) {
+            if (state.tasks.length <= 1) return;
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            renderTaskInputs();
+        }
+
+        function updateTaskName(id, val) {
+            const t = state.tasks.find(x => x.id === id);
+            if (t) t.name = val;
+        }
+
+        function updateTaskDesc(id, val) {
+            const t = state.tasks.find(x => x.id === id);
+            if (t) t.desc = val;
+        }
+
+        function updateTaskIcon(id, val) {
+            const t = state.tasks.find(x => x.id === id);
+            if (t) t.icon = val;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        async function processAIAllocation() {
+            const validTasks = state.tasks.filter(t => t.name.trim() !== '');
+            if (validTasks.length === 0) {
+                alert('최소 1개 이상의 할 일을 입력해 주세요!');
+                return;
+            }
+
+            goToStep(3);
+            showLoadingState();
+
+            let schedule = null;
+            let aiTip = '';
+
+            try {
+                const apiKey = state.apiKey || ''; 
+                if (apiKey) {
+                    const result = await callGeminiAPI(apiKey, state.totalMinutes, validTasks);
+                    schedule = result.schedule;
+                    aiTip = result.tip;
+                }
+            } catch (err) {
+                console.warn('Gemini API skipped or failed, using smart fallback algorithm:', err);
+            }
+
+            if (!schedule || schedule.length === 0) {
+                const fallbackResult = smartFallbackAllocation(state.totalMinutes, validTasks);
+                schedule = fallbackResult.schedule;
+                aiTip = fallbackResult.tip;
+            }
+
+            state.allocatedSchedule = schedule;
+            renderTimeline(schedule, aiTip);
+            initTimerForTask(0);
+        }
+
+        function showLoadingState() {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = `
+                <div class="py-12 text-center space-y-3">
+                    <div class="inline-block p-4 rounded-full bg-indigo-500/10 text-indigo-400 radar-pulse">
+                        <i class="fa-solid fa-brain text-3xl"></i>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-300">AI가 자투리 시간과 할 일의 밀도를 분석중입니다...</p>
+                </div>
+            `;
+        }
+
+        async function callGeminiAPI(key, totalMins, tasks) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`;
+            
+            const prompt = `
+            사용자의 총 자투리 시간: [${totalMins}분]
+            할 일 목록:
+            ${tasks.map((t, i) => `${i+1}. 이름: "${t.name}", 세부내용: "${t.desc || '없음'}"`).join('\n')}
+
+            요청사항:
+            - 총 ${totalMins}분을 완전히 정확히 배분하세요.
+            - 필요하다면 마무리에 '정리 및 쉬어가기' 항목을 추가하세요.
+            
+            JSON 형식을 지켜 응답하세요:
+            {
+              "schedule": [
+                 {
+                   "title": "제목",
+                   "minutes": 10,
+                   "reason": "AI 추천 사유",
+                   "icon": "fa-book-open" 
+                 }
+              ],
+              "tip": "생산성 코칭 한마디"
+            }
+            `;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            const data = await response.json();
+            const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textResult) return JSON.parse(textResult);
+            throw new Error('Invalid response');
+        }
+
+        function smartFallbackAllocation(totalMins, tasks) {
+            let result = [];
+            const taskCount = tasks.length;
+            
+            let bufferMins = totalMins >= 45 ? 5 : (totalMins >= 30 ? 3 : 0);
+            let availableForTasks = totalMins - bufferMins;
+
+            let baseMinsPerTask = Math.floor(availableForTasks / taskCount);
+            let remainder = availableForTasks % taskCount;
+
+            tasks.forEach((t, i) => {
+                let allocated = baseMinsPerTask + (i === 0 ? remainder : 0);
+                result.push({
+                    title: t.name,
+                    minutes: allocated,
+                    reason: t.desc ? `세부 메모 "${t.desc}" 집중 수행` : `${allocated}분 집중 몰입 구간입니다.`,
+                    icon: t.icon || 'fa-check'
+                });
+            });
+
+            if (bufferMins > 0) {
+                result.push({
+                    title: '마무리 & 마인드 릴랙스',
+                    minutes: bufferMins,
+                    reason: '알찬 자투리 시간 활용을 마치고 마음을 정돈합니다.',
+                    icon: 'fa-mug-hot'
+                });
+            }
+
+            return {
+                schedule: result,
+                tip: `총 ${totalMins}분 자투리 시간이 완벽하게 짜여졌습니다. 짧은 시간에 집중해보세요!`
+            };
+        }
+
+        // Render Sleek Timeline Cards
+        function renderTimeline(schedule, tip) {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '';
+
+            let totalProductive = 0;
+            let totalBuffer = 0;
+
+            schedule.forEach((item, idx) => {
+                if (item.icon === 'fa-mug-hot' || item.title.includes('마무리')) {
+                    totalBuffer += item.minutes;
+                } else {
+                    totalProductive += item.minutes;
+                }
+
+                const card = document.createElement('div');
+                card.id = `taskCard_${idx}`;
+                card.className = "glass-card glass-card-hover rounded-2xl p-4 flex items-start gap-3.5 relative z-10 cursor-pointer";
+                card.onclick = () => selectTaskForTimer(idx);
+
+                card.innerHTML = `
+                    <!-- Node Indicator Dot -->
+                    <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/80 text-indigo-400 font-bold flex items-center justify-center flex-shrink-0 shadow-inner">
+                        <i class="fa-solid ${item.icon || 'fa-check'} text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <h4 class="font-bold text-white text-xs sm:text-sm truncate">${escapeHtml(item.title)}</h4>
+                            <span class="text-[11px] font-extrabold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-full">${item.minutes}분</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">${escapeHtml(item.reason || '')}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('summaryTotalInput').innerText = state.totalMinutes;
+            document.getElementById('summaryProductiveMins').innerText = totalProductive;
+            document.getElementById('summaryBufferMins').innerText = totalBuffer;
+            document.getElementById('aiTipText').innerText = tip || "짧은 자투리 시간을 누적하면 수많은 결실을 만듭니다.";
+        }
+
+        // Focus Player Timer Engine
+        function initTimerForTask(index) {
+            if (index >= state.allocatedSchedule.length) {
+                completeAllTasks();
+                return;
+            }
+
+            state.timer.activeTaskIndex = index;
+            const task = state.allocatedSchedule[index];
+            state.timer.secondsRemaining = task.minutes * 60;
+            state.timer.totalTaskSeconds = task.minutes * 60;
+            
+            document.getElementById('currentTaskTitle').innerText = `${index + 1}. ${task.title}`;
+            document.getElementById('timerStatusLabel').innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> 진행 중 (${index + 1}/${state.allocatedSchedule.length})`;
+            document.getElementById('currentTaskIndexBadge').innerText = `TASK ${index + 1} / ${state.allocatedSchedule.length}`;
+
+            updateTimerDisplay();
+            highlightActiveTaskCard(index);
+        }
+
+        function highlightActiveTaskCard(index) {
+            state.allocatedSchedule.forEach((_, idx) => {
+                const el = document.getElementById(`taskCard_${idx}`);
+                if (!el) return;
+                if (idx === index) {
+                    el.className = "glass-card rounded-2xl p-4 flex items-start gap-3.5 relative z-10 ring-2 ring-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/20";
+                } else if (idx < index) {
+                    el.className = "glass-card rounded-2xl p-4 flex items-start gap-3.5 relative z-10 opacity-40";
+                } else {
+                    el.className = "glass-card glass-card-hover rounded-2xl p-4 flex items-start gap-3.5 relative z-10 cursor-pointer";
+                }
+            });
+        }
+
+        function selectTaskForTimer(index) {
+            pauseTimer();
+            initTimerForTask(index);
+        }
+
+        function toggleTimer() {
+            if (state.timer.isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (state.timer.isRunning) return;
+            state.timer.isRunning = true;
+            
+            document.getElementById('timerBtnIcon').className = "fa-solid fa-pause text-xs";
+            document.getElementById('timerBtnText').innerText = "일시정지";
+
+            state.timer.interval = setInterval(() => {
+                if (state.timer.secondsRemaining > 0) {
+                    state.timer.secondsRemaining--;
+                    updateTimerDisplay();
+                } else {
+                    pauseTimer();
+                    confetti({ particleCount: 50, spread: 60 });
+                    skipNextTask();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            state.timer.isRunning = false;
+            if (state.timer.interval) clearInterval(state.timer.interval);
+            document.getElementById('timerBtnIcon').className = "fa-solid fa-play text-xs";
+            document.getElementById('timerBtnText').innerText = "계속 시작";
+        }
+
+        function skipNextTask() {
+            pauseTimer();
+            initTimerForTask(state.timer.activeTaskIndex + 1);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(state.timer.secondsRemaining / 60);
+            const secs = state.timer.secondsRemaining % 60;
+            document.getElementById('timerDisplay').innerText = 
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            // Update Progress Bar
+            if (state.timer.totalTaskSeconds > 0) {
+                const elapsedPercent = ((state.timer.totalTaskSeconds - state.timer.secondsRemaining) / state.timer.totalTaskSeconds) * 100;
+                document.getElementById('activeTaskProgressBar').style.width = `${elapsedPercent}%`;
+            }
+        }
+
+        function completeAllTasks() {
+            document.getElementById('currentTaskTitle').innerText = "🎉 축하합니다! 모든 자투리 스케줄을 완수했습니다!";
+            document.getElementById('timerStatusLabel').innerHTML = "<span class='text-emerald-400'>✨ 완수 완료</span>";
+            document.getElementById('timerDisplay').innerText = "00:00";
+            document.getElementById('activeTaskProgressBar').style.width = "100%";
+            
+            confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function resetAll() {
+            pauseTimer();
+            goToStep(1);
+        }
+
+        // Modal Handlers
+        function toggleApiKeyModal() {
+            document.getElementById('apiKeyModal').classList.toggle('hidden');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('userApiKeyInput').value.trim();
+            state.apiKey = key;
+            const statusDot = document.getElementById('apiStatusDot');
+            const statusText = document.getElementById('apiStatusText');
+
+            if (key) {
+                statusDot.className = "w-2 h-2 rounded-full bg-indigo-400 inline-block shadow-sm shadow-indigo-400";
+                statusText.innerText = "사용자 Gemini Key 등록됨";
+            } else {
+                statusDot.className = "w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400";
+                statusText.innerText = "AI 엔진 가동중";
+            }
+            toggleApiKeyModal();
         }
     </script>
-
 </body>
-</html>ㅓㅕ
+</html>
